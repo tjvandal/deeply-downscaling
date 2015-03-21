@@ -28,8 +28,8 @@ end
   @pyimport sklearn.svm as svm
   @pyimport sklearn.grid_search as grid_search
 
-  parameters = Dict("C"=>Float64[10^x for x in linspace(-2, 2, 1)],
-    "epsilon"=>Float64[10^x for x in linspace(-2, 2, 2)])
+  parameters = {"C"=>Float64[10^x for x in linspace(-2, 2, 1)],
+    "epsilon"=>Float64[10^x for x in linspace(-2, 2, 2)]}
   svr = svm.SVR(kernel="linear")
   clf = grid_search.GridSearchCV(svr, parameters, cv=2)
   clf[:fit](xtrain, ytrain)
@@ -138,12 +138,12 @@ end
   pcasvr_model = svr_train(x_train_pca, y_train)
   yhat_pca = pcasvr_model[:predict](x_test_pca)
 
-  results = Dict("test_mean"=>mean(y_test), "test_std"=>std(y_test),
+  results = {"test_mean"=>mean(y_test), "test_std"=>std(y_test),
                  "lasso_mse"=>mse(y_test, yhat_lasso_test), "lasso_mean"=>mean(yhat_lasso_test), "lasso_std"=>std(yhat_lasso_test),"lasso_cor"=>cor(yhat_lasso_test, y_test)[1],
                  "el_mse"=>mse(y_test, yhat_el_test), "el_mean"=>mean(yhat_el_test), "el_std"=>std(yhat_el_test), "el_cor"=>cor(yhat_el_test, y_test)[1],
                  "el-svr_mse"=>mse(y_test, y_hat_svr_test), "el-svr_mean"=>mean(y_hat_svr_test), "el-svr_std"=>std(y_hat_svr_test), "el-svr_cor"=>cor(y_hat_svr_test, y_test)[1],
                  "pca-svr_mse"=>mse(y_test, yhat_pca), "pca-svr_mean"=>mean(yhat_pca), "pca-svr_std"=>std(yhat_pca), "pca-svr_cor"=>cor(yhat_pca, y_test)[1]
-                 )
+                 }
 
   return(DataFrame(results))
 end
@@ -164,10 +164,21 @@ function run_all()
   grid_lat = ncdata["grid_lat"]
 
   X_train, _, X_test, _ = split_training(X, Y, test_percentage)
-
   X_train, X_test = normalize_features(X_train, X_test)
-  println("Running PCA Transform")
-  x_train_pca, x_test_pca = whiten_pca(X_train, X_test)
+
+  pca_train_file = "pca_train_x"
+  pca_test_file = "pca_test_x"
+  if isfile(pca_train_file) & isfile(pca_test_file)
+      x_train_pca = readdlm(pca_train_file)
+      x_test_pca = readdlm(pca_test_file)
+  else
+      println("Running PCA Transform")
+      x_train_pca, x_test_pca = whiten_pca(X_train, X_test)
+      writedlm(pca_train_file, x_train_pca)
+      writedlm(pca_test_file, x_test_pca)
+  end
+  
+
 
   df = false
   tasks=Array(RemoteRef, size(Y)[2], size(Y)[1])
@@ -181,7 +192,7 @@ function run_all()
     #if lonidx % lon_skip != 0
      # continue
     #end
-    println("%2.2f percent completed", lonidx*100./size(Y)[1])  
+    println("$(lonidx*100./size(Y)[1]) percent completed")  
     for latidx=1:size(Y)[2]
       #if latidx % lat_skip != 0
       #  continue
@@ -203,7 +214,6 @@ function run_all()
       else
         res[:latitude] = obs_lat[latidx]
         res[:longitude] = obs_lon[lonidx]
-        println("Lat: $(latidx), Lon: $(lonidx)")
         if (isdefined(:df)) & (typeof(df) != Bool)
           append!(df, res)
         else
