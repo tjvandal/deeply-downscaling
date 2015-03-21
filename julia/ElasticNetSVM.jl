@@ -144,7 +144,6 @@ end
                  "el-svr_mse"=>mse(y_test, y_hat_svr_test), "el-svr_mean"=>mean(y_hat_svr_test), "el-svr_std"=>std(y_hat_svr_test), "el-svr_cor"=>cor(y_hat_svr_test, y_test)[1],
                  "pca-svr_mse"=>mse(y_test, yhat_pca), "pca-svr_mean"=>mean(yhat_pca), "pca-svr_std"=>std(yhat_pca), "pca-svr_cor"=>cor(yhat_pca, y_test)[1]
                  )
-  println(results)
 
   return(DataFrame(results))
 end
@@ -179,32 +178,24 @@ function run_all()
   test_latidx = 111
 
   for lonidx=1:size(Y)[1]
-    if lonidx % lon_skip != 0
-      continue
-    end
-    println("lon_skip:", lon_skip, " index:", lonidx)
+    #if lonidx % lon_skip != 0
+     # continue
+    #end
+    println("%2.2f percent completed", lonidx*100./size(Y)[1])  
     for latidx=1:size(Y)[2]
-      if latidx % lat_skip != 0
-        continue
-      end
-
-      if (latidx!=test_latidx) & (lonidx!=test_lonidx)
-        continue
-      end
+      #if latidx % lat_skip != 0
+      #  continue
+      #end
 
       y = reshape(Y[lonidx, latidx, :, :], size(Y)[3]*size(Y)[4])
       _, y_train, _, y_test = split_training(X, y, test_percentage)
-      println(mean(y_train))
       tasks[latidx, lonidx] = @spawn main(X_test, X_train, y_train, y_test, latidx, lonidx, 0.5, x_train_pca, x_test_pca)
     end
 
     for latidx=1:size(Y)[2]
-      if latidx % lat_skip != 0
-        continue
-      end
-      if (latidx!=test_latidx) & (lonidx!=test_lonidx)
-        continue
-      end
+      #if latidx % lat_skip != 0
+      #  continue
+      #end
 
       res = deepcopy(fetch(tasks[latidx, lonidx]))
       if typeof(res) == Bool
