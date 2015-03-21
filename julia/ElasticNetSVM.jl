@@ -5,10 +5,10 @@
 
 include("readncfiles.jl")
 @everywhere using GLMNet
-@everywhere using Winston
+#@everywhere using Winston
 @everywhere using PyCall
 @everywhere using DataFrames
-@everywhere using MATLAB
+#@everywhere using MATLAB
 @everywhere using MultivariateStats
 
 function split_training(X, y, test_percent=0.33)
@@ -57,6 +57,7 @@ end
   return(true)
 end
 
+## function is not being used, replaced with regular svr via pycall
 @everywhere function lssvm_train(xtrain, ytrain, xtest)
   sess = MSession(rand(1:100000))
   mx_train = mxarray(xtrain)
@@ -124,31 +125,23 @@ end
 
   lasso_svr_corr = cor(y_hat_svr_test, y_test)
   println("Correlation ElasticNet-SVR:", lasso_svr_corr)
-  var(y_hat_svr_test)
-  mean(y_hat_svr_test)
 
   ## Train LS-SVM
-  yhat_el_lssvm_test = lssvm_train(X_train_el, y_train, X_test_el)
-  elnet_lssvm_cor = cor(yhat_el_lssvm_test, y_test)
+  #yhat_el_lssvm_test = lssvm_train(X_train_el, y_train, X_test_el)
+  #elnet_lssvm_cor = cor(yhat_el_lssvm_test, y_test)
 
   ## Train PCA-SVM
   if (typeof(x_train_pca) == Bool) & (typeof(x_test_pca) == Bool)
     x_train_pca, x_test_pca = whiten_pca(X_train, X_test)
   end
-  yhat_pca = lssvm_train(x_train_pca, y_train, x_test_pca)
-  cor(yhat_pca, y_test)
-
- # results = Dict("test"=>Dict( "mean"=>mean(y_test), "std"=>std(y_test)),
- #                "lasso"=>Dict("mse"=>mse(y_test, yhat_lasso_test), "mean"=>mean(yhat_lasso_test), "std"=>std(yhat_lasso_test), "cor"=>cor(yhat_lasso_test, y_test)),
- #                "el"=>Dict("mse"=>mse(y_test, yhat_el_test), "mean"=>mean(yhat_el_test), "std"=>std(yhat_el_test), "cor"=>cor(yhat_el_test, y_test)),
- #                "el-svr"=>Dict("mse"=>mse(y_test, yhat_el_lssvm_test), "mean"=>mean(yhat_el_lssvm_test), "std"=>std(yhat_el_lssvm_test), "cor"=>cor(yhat_el_lssvm_test, y_test)),
- #                "pca-svr"=>Dict("mse"=>mse(y_test, yhat_pca), "mean"=>mean(yhat_pca), "std"=>std(yhat_pca), "cor"=>cor(yhat_pca, y_test))
- #                )
+  #yhat_pca = lssvm_train(x_train_pca, y_train, x_test_pca)
+  pcasvr_model = svr_train(x_train_pca, y_train)
+  yhat_pca = pcasvr_model[:predict](x_test_pca)
 
   results = Dict("test_mean"=>mean(y_test), "test_std"=>std(y_test),
                  "lasso_mse"=>mse(y_test, yhat_lasso_test), "lasso_mean"=>mean(yhat_lasso_test), "lasso_std"=>std(yhat_lasso_test),"lasso_cor"=>cor(yhat_lasso_test, y_test)[1],
                  "el_mse"=>mse(y_test, yhat_el_test), "el_mean"=>mean(yhat_el_test), "el_std"=>std(yhat_el_test), "el_cor"=>cor(yhat_el_test, y_test)[1],
-                 "el-svr_mse"=>mse(y_test, yhat_el_lssvm_test), "el-svr_mean"=>mean(yhat_el_lssvm_test), "el-svr_std"=>std(yhat_el_lssvm_test), "el-svr_cor"=>cor(yhat_el_lssvm_test, y_test)[1],
+                 "el-svr_mse"=>mse(y_test, y_hat_svr_test), "el-svr_mean"=>mean(y_hat_svr_test), "el-svr_std"=>std(y_hat_svr_test), "el-svr_cor"=>cor(y_hat_svr_test, y_test)[1],
                  "pca-svr_mse"=>mse(y_test, yhat_pca), "pca-svr_mean"=>mean(yhat_pca), "pca-svr_std"=>std(yhat_pca), "pca-svr_cor"=>cor(yhat_pca, y_test)[1]
                  )
   println(results)
@@ -163,7 +156,7 @@ function run_all()
   max_lon = 315
   test_percentage = 0.33
 
-  ncdata = readdata(min_lat, max_lat, min_lon, max_lon)
+  ncdata = readdata(min_lat, max_lat, min_lon, max_lon)  ##readncfiles.jl
   X = ncdata["X"]
   Y = ncdata["Y"]
   obs_lat = ncdata["obs_lat"]
