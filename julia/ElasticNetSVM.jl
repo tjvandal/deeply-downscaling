@@ -101,10 +101,6 @@ end
 @everywhere function main(X_test, X_train, y_train, y_test, lat_index, lon_index, alpha=0.5, x_train_pca=None, x_test_pca=None)
   srand(3)
 
-  if mean(y_train) > 100000
-    return false
-  end
-
   ## Train Lasso
   cv = glmnetcv(X_train, y_train, alpha=1, lambda_min_ratio=0.0001, nfolds=10, nlambda=1000)
   yhat_lasso_test = elastic_net_predict(cv, X_test)
@@ -177,7 +173,7 @@ function run_all()
       writedlm(pca_train_file, x_train_pca)
       writedlm(pca_test_file, x_test_pca)
   end
-  
+
 
 
   df = false
@@ -192,7 +188,7 @@ function run_all()
 #    if lonidx % lon_skip != 0
 #      continue
 #    end
-    println("$(lonidx*100./size(Y)[1]) percent completed")  
+    println("$(lonidx*100./size(Y)[1]) percent completed")
     for latidx=1:size(Y)[2]
 #      if latidx % lat_skip != 0
 #        continue
@@ -200,25 +196,28 @@ function run_all()
 
       y = reshape(Y[lonidx, latidx, :, :], size(Y)[3]*size(Y)[4])
       _, y_train, _, y_test = split_training(X, y, test_percentage)
-     tasks[latidx, lonidx] = @spawn main(X_test, X_train, y_train, y_test, latidx, lonidx, 0.5, x_train_pca, x_test_pca)
-    end
+      if mean(y_train) < 10000
+        tasks[latidx, lonidx] = @spawn main(X_test, X_train, y_train, y_test, latidx, lonidx, 0.5, x_train_pca, x_test_pca)
+      end
 
     for latidx=1:size(Y)[2]
 #      if latidx % lat_skip != 0
 #        continue
 #      end
 
+      if !isdefined(tasks, latidx, lonidx)
+          continue
+      end
       res = deepcopy(fetch(tasks[latidx, lonidx]))
       if typeof(res) == Bool
         continue
       else
+
         res[:latitude] = obs_lat[latidx]
         res[:longitude] = obs_lon[lonidx]
         if (typeof(df) != Bool)
           append!(df, res)
         else
-          println("New Dataframe")
-	  println(isdefined(:df), "  type:", typeof(df))
           df = res
         end
       end
@@ -227,5 +226,6 @@ function run_all()
       println(df)
       writetable("results.csv", df)
     end
+  end
   end
 end
