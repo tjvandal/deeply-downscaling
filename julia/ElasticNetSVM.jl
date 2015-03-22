@@ -113,18 +113,18 @@ end
   cv = glmnetcv(X_train, y_train, alpha=alpha, lambda_min_ratio=0.0001, nfolds=10, nlambda=1000)
   yhat_el_test = elastic_net_predict(cv, X_test)
   elnet_corr = cor(yhat_el_test, y_test)
-  println("correlation for lasso : ", elnet_corr, " Mean of yhat_test: ", mean(yhat_el_test), " Variance of yhat_test: ", var(yhat_el_test))
+#  println("correlation for lasso : ", elnet_corr, " Mean of yhat_test: ", mean(yhat_el_test), " Variance of yhat_test: ", var(yhat_el_test))
 
   X_train_el = elastic_net_nonzero_variables(cv, X_train)
   X_test_el = elastic_net_nonzero_variables(cv, X_test)
-  println("Number of Non Zero Betas: ", size(X_train_el)[2])
+  #println("Number of Non Zero Betas: ", size(X_train_el)[2])
 
   ## Train SVR
   lassosvr_model = svr_train(X_train_el, y_train)
   y_hat_svr_test = lassosvr_model[:predict](X_test_el)
 
   lasso_svr_corr = cor(y_hat_svr_test, y_test)
-  println("Correlation ElasticNet-SVR:", lasso_svr_corr)
+  #println("Correlation ElasticNet-SVR:", lasso_svr_corr)
 
   ## Train LS-SVM
   #yhat_el_lssvm_test = lssvm_train(X_train_el, y_train, X_test_el)
@@ -138,14 +138,14 @@ end
   pcasvr_model = svr_train(x_train_pca, y_train)
   yhat_pca = pcasvr_model[:predict](x_test_pca)
 
-  results = {"test_mean"=>mean(y_test), "test_std"=>std(y_test),
-                 "lasso_mse"=>mse(y_test, yhat_lasso_test), "lasso_mean"=>mean(yhat_lasso_test), "lasso_std"=>std(yhat_lasso_test),"lasso_cor"=>cor(yhat_lasso_test, y_test)[1],
-                 "el_mse"=>mse(y_test, yhat_el_test), "el_mean"=>mean(yhat_el_test), "el_std"=>std(yhat_el_test), "el_cor"=>cor(yhat_el_test, y_test)[1],
-                 "el-svr_mse"=>mse(y_test, y_hat_svr_test), "el-svr_mean"=>mean(y_hat_svr_test), "el-svr_std"=>std(y_hat_svr_test), "el-svr_cor"=>cor(y_hat_svr_test, y_test)[1],
-                 "pca-svr_mse"=>mse(y_test, yhat_pca), "pca-svr_mean"=>mean(yhat_pca), "pca-svr_std"=>std(yhat_pca), "pca-svr_cor"=>cor(yhat_pca, y_test)[1]
-                 }
+  results = {"test_mean"=>[mean(y_test)], "test_std"=>[std(y_test)],
+                 "lasso_mse"=>[mse(y_test, yhat_lasso_test)], "lasso_mean"=>[mean(yhat_lasso_test)], "lasso_std"=>[std(yhat_lasso_test)],"lasso_cor"=>[cor(yhat_lasso_test, y_test)[1]],
+                 "el_mse"=>[mse(y_test, yhat_el_test)], "el_mean"=>[mean(yhat_el_test)], "el_std"=>[std(yhat_el_test)], "el_cor"=>[cor(yhat_el_test, y_test)[1]],
+                 "el-svr_mse"=>[mse(y_test, y_hat_svr_test)], "el-svr_mean"=>[mean(y_hat_svr_test)], "el-svr_std"=>[std(y_hat_svr_test)], "el-svr_cor"=>[cor(y_hat_svr_test, y_test)[1]],
+                 "pca-svr_mse"=>[mse(y_test, yhat_pca)], "pca-svr_mean"=>[mean(yhat_pca)], "pca-svr_std"=>[std(yhat_pca)], "pca-svr_cor"=>[cor(yhat_pca, y_test)[1]]
+            }
 
-  return(DataFrame(results))
+  return(convert(DataFrame,results))
 end
 
 function run_all()
@@ -189,24 +189,24 @@ function run_all()
   test_latidx = 111
 
   for lonidx=1:size(Y)[1]
-    #if lonidx % lon_skip != 0
-     # continue
-    #end
+#    if lonidx % lon_skip != 0
+#      continue
+#    end
     println("$(lonidx*100./size(Y)[1]) percent completed")  
     for latidx=1:size(Y)[2]
-      #if latidx % lat_skip != 0
-      #  continue
-      #end
+#      if latidx % lat_skip != 0
+#        continue
+#      end
 
       y = reshape(Y[lonidx, latidx, :, :], size(Y)[3]*size(Y)[4])
       _, y_train, _, y_test = split_training(X, y, test_percentage)
-      tasks[latidx, lonidx] = @spawn main(X_test, X_train, y_train, y_test, latidx, lonidx, 0.5, x_train_pca, x_test_pca)
+     tasks[latidx, lonidx] = @spawn main(X_test, X_train, y_train, y_test, latidx, lonidx, 0.5, x_train_pca, x_test_pca)
     end
 
     for latidx=1:size(Y)[2]
-      #if latidx % lat_skip != 0
-      #  continue
-      #end
+#      if latidx % lat_skip != 0
+#        continue
+#      end
 
       res = deepcopy(fetch(tasks[latidx, lonidx]))
       if typeof(res) == Bool
@@ -214,9 +214,11 @@ function run_all()
       else
         res[:latitude] = obs_lat[latidx]
         res[:longitude] = obs_lon[lonidx]
-        if (isdefined(:df)) & (typeof(df) != Bool)
+        if (typeof(df) != Bool)
           append!(df, res)
         else
+          println("New Dataframe")
+	  println(isdefined(:df), "  type:", typeof(df))
           df = res
         end
       end
