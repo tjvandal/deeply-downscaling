@@ -1,5 +1,6 @@
 !obj:pylearn2.train.Train {
     dataset: &train !obj:load_data.load_pretraining {
+        batchsize: 50
     },
        model: !obj:pylearn2.models.rbm.GaussianBinaryRBM {
         nvis : 325,

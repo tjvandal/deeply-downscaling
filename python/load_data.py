@@ -5,23 +5,31 @@ import numpy
 from matplotlib import pyplot
 from pylearn2.datasets.dense_design_matrix import DenseDesignMatrix
 
+DATA_DIR = os.path.join(os.path.expanduser("~"), "data")
 
 max_lat = 50 #75 #40
 min_lat = 18  #0  #15
 min_lon = 230 #180  # 220
 max_lon = 290 #315 #290
 
-variables = ["air"]
+variables = ["air", "pres", "pr_wtr", "rhum", "slp", "uwnd", "vwnd"]
+
+def check_dir_exists(dir):
+    if not os.path.exists(dir):
+        os.mkdir(dir)
 
 ## download y variable, daily prcp
 def download_observed_daily():
     years = range(1950, 2000)
-    savedir = "/Users/tj/repos/lasso-downscaling/data/gridded_observed_daily/"
+    savedir = os.path.join(DATA_DIR, "gridded_observed_daily/")
+    check_dir_exists(savedir)
     os.chdir(savedir)
     for y in years:
         ## observed prcp
         url = "http://hydro.engr.scu.edu/files/gridded_obs/daily/ncfiles/gridded_obs.daily.Prcp.%i.nc.gz" % y
-
+        fname = os.path.basename(url)
+        if os.path.exists(fname):
+            continue
         print "Downloading %s" % url
         os.system("wget %s" % url)
     os.system("gunzip *.gz")
@@ -29,10 +37,16 @@ def download_observed_daily():
 ## reanalysis 4h data
 def download_4h_data(var):
     years = range(1948, 2015)
-    savedir = "/Users/tj/repos/lasso-downscaling/data/4h_ncep/%s" % var
+    savedir = os.path.join(DATA_DIR, "4h_ncep" )
+    check_dir_exists(savedir)
+    savedir = os.path.join(savedir, var)
+    check_dir_exists(savedir)
     os.chdir(savedir)
     for y in years:
         url = "ftp://ftp.cdc.noaa.gov/Datasets/ncep.reanalysis/surface/%s.sig995.%i.nc" % (var, y)
+        fname = os.path.basename(url)
+        if os.path.exists(fname):
+            continue
         print "Downloading %s" % url
         os.system("wget %s" % url)
 
@@ -40,16 +54,21 @@ def download_4h_data(var):
 ## reanalysis daily data
 def download_daily_data(var):
     years = range(1948, 2015)
-    savedir = "/Users/tj/repos/lasso-downscaling/data/daily_ncep/%s" % var
+    savedir = os.path.join(DATA_DIR, "daily_ncep" )
+    check_dir_exists(savedir)
+    savedir = os.path.join(savedir, var)
+    check_dir_exists(savedir)
     os.chdir(savedir)
     for y in years:
         url = "ftp://ftp.cdc.noaa.gov/Datasets/ncep.reanalysis.dailyavgs/surface/%s.sig995.%i.nc" % (var, y)
+        fname = os.path.basename(url)
+        if os.path.exists(fname):
+            continue
         print "Downloading %s" % url
         os.system("wget %s" % url)
 
 def load_pretraining(batchsize):
-    data_dir = os.path.join(os.path.expanduser("~"), "repos/lasso-downscaling/data/")
-    ncep_ncar = os.path.join(data_dir, "4h_ncep")
+    ncep_ncar = os.path.join(DATA_DIR, "4h_ncep")
 
     years = range(1948, 1980)
     datalist = []
@@ -81,10 +100,9 @@ def load_pretraining(batchsize):
     return DenseDesignMatrix(X=X)
 
 def load_supervised(minyear, maxyear, lt, ln):
-    data_dir = os.path.join(os.path.expanduser("~"), "repos/lasso-downscaling/data/")
-    observed_data_dir = os.path.join(data_dir, "gridded_observed_daily")
-    observed_file = os.path.join(observed_data_dir, "gridded_obs.daily.Prcp.%i.nc")
-    ncep_daily_file = os.path.join(data_dir, "daily_ncep", "%s", "%s.sig995.%i.nc")
+    observed_data_dir = os.path.join(DATA_DIR, "gridded_observed_daily")
+    observed_file = os.path.join(DATA_DIR, "gridded_obs.daily.Prcp.%i.nc")
+    ncep_daily_file = os.path.join(DATA_DIR, "daily_ncep", "%s", "%s.sig995.%i.nc")
 
     data = Dataset(observed_file % minyear)
     lat = numpy.where(data.variables["latitude"][:] < lt)
@@ -125,6 +143,9 @@ def load_supervised(minyear, maxyear, lt, ln):
 
 
 if __name__ == "__main__":
-    load_pretraining()
+    #load_pretraining()
     #load_supervised(1950, 1960, 30, 250)
-    #download_daily_data("air")
+    download_observed_daily()
+    for var in variables:
+        download_daily_data(var)
+        download_4h_data(var)
