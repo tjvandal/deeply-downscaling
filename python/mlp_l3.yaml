@@ -1,0 +1,80 @@
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:load_data.load_supervised {
+        minyear: 1950,
+        maxyear: 1980,
+        lt: 42,
+        ln: 289,
+        batchsize: 50,
+    },
+    model: !obj:pylearn2.models.mlp.MLP {
+        batch_size: 50,
+        layers: [
+                 !obj:pylearn2.models.mlp.PretrainedLayer {
+                     layer_name: 'h1',
+                     layer_content: !pkl: "grbm_l1.pkl"
+                 },
+                 !obj:pylearn2.models.mlp.PretrainedLayer {
+                     layer_name: 'h2',
+                     layer_content: !pkl: "rbm_l2.pkl"
+                 },
+                    !obj:pylearn2.models.mlp.PretrainedLayer {
+                     layer_name: 'h3',
+                     layer_content: !pkl: "rbm_l3.pkl"
+                 },
+                 !obj:pylearn2.models.mlp.LinearGaussian {   ## this will be changed to an SVR 
+                     init_bias: !obj:pylearn2.models.mlp.mean_of_targets {
+                       dataset: *train },
+                     init_beta: !obj:pylearn2.models.mlp.beta_from_targets {
+                       dataset: *train },
+                     min_beta: 1.,
+                     max_beta: 100.,
+                     beta_lr_scale: 1.,
+                     dim: 1,
+                     # max_col_norm: 1.9365,
+                     layer_name: 'y',
+                     irange: .005
+                 }
+                ],
+        nvis: 715
+    },
+       algorithm: !obj:pylearn2.training_algorithms.bgd.BGD {
+              line_search_mode: 'exhaustive',
+              batch_size: 50,
+              conjugate: 1,
+              reset_conjugate: 0,
+              reset_alpha: 0,
+              updates_per_batch: 10,
+               monitoring_batches: 10,
+               monitoring_dataset : {
+                'train' : *train,
+                'valid' : !obj:load_data.load_supervised {
+                            minyear: 1981,
+                            maxyear: 1990,
+                            lt: 42,
+                            ln: 289,
+                            batchsize: 50,
+                        },
+                'test'  : !obj:load_data.load_supervised {
+                            minyear: 1991,
+                            maxyear: 1999,
+                            lt: 42,
+                            ln: 289,
+                            batchsize: 50,
+                        }
+            },
+            termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
+              max_epochs: 10,
+            }
+        },
+    extensions: [
+            # This callback makes the momentum grow to 0.9 linearly. It starts
+            # growing at epoch 5 and finishes growing at epoch 6.
+            #!obj:pylearn2.training_algorithms.learning_rule.MomentumAdjustor {
+            #    final_momentum: .9,
+            #    start: 5,
+            #    saturate: 6
+            #},
+    ],
+    save_path: "./mlp_svm.pkl",
+    save_freq: 1
+}

@@ -1,7 +1,7 @@
 !obj:pylearn2.train.Train {
       dataset: &train !obj:pylearn2.datasets.transformer_dataset.TransformerDataset {
             raw: !obj:load_data.load_pretraining {
-                batchsize: 50
+                batchsize: 100
             },
             transformer: !pkl: "./grbm_l1.pkl"
         },
@@ -13,7 +13,7 @@
         # (as opposed to a binary image for convolutional models,
         # a Gaussian distributed vector, etc.)
         visible_layer: !obj:pylearn2.models.dbm.BinaryVector {
-            nvis: 300,
+            nvis: 700,
         },
         hidden_layers: [
             # This RBM has one hidden layer, consisting of a binary vector.
@@ -21,7 +21,7 @@
             # here we don't, by setting pool_size = 1.
             !obj:pylearn2.models.dbm.BinaryVectorMaxPool {
                 layer_name: 'h1',
-                detector_layer_dim: 150,
+                detector_layer_dim: 200,
                 pool_size: 1,
                 irange: .05,
                 init_bias: -2.,
