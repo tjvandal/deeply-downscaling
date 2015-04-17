@@ -1,10 +1,12 @@
 !obj:pylearn2.train.Train {
     dataset: &train !obj:load_data.load_pretraining {
-        batchsize: 100
+        minyear: 1950,
+        maxyear: 1980,
+        batchsize: 100,
     },
        model: !obj:pylearn2.models.rbm.GaussianBinaryRBM {
-        nvis : 715,
-        nhid : 700,
+        nvis : 2178,
+        nhid : 2000,
         irange : 0.05,
         energy_function_class : !obj:pylearn2.energy_functions.rbm_energy.grbm_type_1 {},
         learn_sigma : True,

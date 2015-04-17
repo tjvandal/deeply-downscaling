@@ -6,8 +6,8 @@
             transformer: !pkl: "./grbm_l1.pkl"
         },
        model: !obj:pylearn2.models.rbm.RBM {
-        nvis : 700,
-        nhid : 250,
+        nvis : 2000,
+        nhid : 500,
         irange : 0.05,
         #init_bias_hid : 0.0,
     },
