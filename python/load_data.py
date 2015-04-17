@@ -70,7 +70,8 @@ def download_daily_data(var):
 
 def load_pretraining(minyear, maxyear, batchsize):
     ncep_ncar = os.path.join(DATA_DIR, "4h_ncep")
-    pretraining_file = os.path.join(DATA_DIR, 'downscaling-deeplearing', "pretrain.pkl")
+    pretraining_file = os.path.join(DATA_DIR, 'downscaling-deeplearning', "pretrain.pkl")
+    print pretraining_file
     if os.path.exists(pretraining_file):
         print "reading from pretraining file"
         return pickle.load(open(pretraining_file, 'r'))
@@ -110,9 +111,9 @@ def load_supervised(minyear, maxyear, lt, ln, batchsize, which='train'):
     observed_file = os.path.join(observed_data_dir, "gridded_obs.daily.Prcp.%i.nc")
     ncep_daily_file = os.path.join(DATA_DIR, "daily_ncep", "%s", "%s.%s.%i.nc")
 
-    supervised_file = os.path.join(DATA_DIR, 'downscaling-deeplearing', "%s_%i_%i_%i_%i.pkl" % (which, minyear, maxyear, lt, ln))
-    transform_file = os.path.join(DATA_DIR, 'downscaling-deeplearing', "trainsform_%i_%i.pkl" % (lt, ln))
-
+    supervised_file = os.path.join(DATA_DIR, 'downscaling-deeplearning', "%s_%i_%i_%i_%i.pkl" % (which, minyear, maxyear, lt, ln))
+    transform_file = os.path.join(DATA_DIR, 'downscaling-deeplearning', "trainsform_%i_%i.pkl" % (lt, ln))
+    print supervised_file
     if os.path.exists(supervised_file):
         print "reading from learning file"
         return pickle.load(open(supervised_file, 'r'))

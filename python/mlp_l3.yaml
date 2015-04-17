@@ -3,7 +3,7 @@
         minyear: 1950,
         maxyear: 1980,
         lt: 42,
-        ln: 289,
+        ln: 250,
         batchsize: 50,
         which: train
     },
@@ -52,13 +52,13 @@
                             minyear: 1981,
                             maxyear: 1999,
                             lt: 42,
-                            ln: 289,
+                            ln: 250,
                             batchsize: 50,
                             which: 'test'
                         },
             },
             termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
-              max_epochs: 10,
+              max_epochs: 15,
             }
         },
     extensions: [

@@ -7,23 +7,23 @@ from matplotlib import pyplot
 
 # In[2]:
 
-layer1_yaml = open('grbm_l1.yaml', 'r').read()
-train = yaml_parse.load(layer1_yaml)
-train.main_loop()
+#layer1_yaml = open('grbm_l1.yaml', 'r').read()
+#train = yaml_parse.load(layer1_yaml)
+#train.main_loop()
 
 
 # In[5]:
 
-layer2_yaml = open('rbm_l2.yaml', 'r').read()
-train = yaml_parse.load(layer2_yaml)
-train.main_loop()
+#layer2_yaml = open('rbm_l2.yaml', 'r').read()
+#train = yaml_parse.load(layer2_yaml)
+#train.main_loop()
 
 
 # In[6]:
 
-layer3_yaml = open('rbm_l3.yaml', 'r').read()
-train = yaml_parse.load(layer3_yaml)
-train.main_loop()
+#layer3_yaml = open('rbm_l3.yaml', 'r').read()
+#train = yaml_parse.load(layer3_yaml)
+#train.main_loop()
 
 
 # In[8]:
