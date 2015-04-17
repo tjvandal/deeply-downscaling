@@ -1,6 +1,5 @@
 import os
 import sys
-from netCDF4 import Dataset, num2date
 import numpy
 from matplotlib import pyplot
 from pylearn2.datasets.dense_design_matrix import DenseDesignMatrix
@@ -8,13 +7,13 @@ import pickle
 
 DATA_DIR = os.path.join(os.path.expanduser("~"), "data")
 
-max_lat = 55 #75 #40
-min_lat = 30  #0  #15
-min_lon = 275 #180  # 220
-max_lon = 305 #315 #290
+max_lat = 50 #75 #40
+min_lat = 24  #0  #15
+min_lon = 220 #180  # 220
+max_lon = 300 #315 #290
 
 variables = [["air", "sig995"], ["rhum", "sig995"], ["pr_wtr", "eatm"],
-             ["uwnd", "sig995"], ["vwnd", "sig995"]]
+             ["uwnd", "sig995"], ["vwnd", "sig995"], ['pres', 'sfc']]
 
 def check_dir_exists(dir):
     if not os.path.exists(dir):
@@ -69,14 +68,15 @@ def download_daily_data(var):
         print "Downloading %s" % url
         os.system("wget %s" % url)
 
-def load_pretraining(batchsize):
+def load_pretraining(minyear, maxyear, batchsize):
     ncep_ncar = os.path.join(DATA_DIR, "4h_ncep")
-    pretraining_file = os.path.join(DATA_DIR, "pretrain.pkl")
+    pretraining_file = os.path.join(DATA_DIR, 'downscaling-deeplearing', "pretrain.pkl")
     if os.path.exists(pretraining_file):
         print "reading from pretraining file"
         return pickle.load(open(pretraining_file, 'r'))
 
-    years = range(1948, 1955)
+    from netCDF4 import Dataset, num2date
+    years = range(minyear, maxyear+1)
     datalist = []
 
     for year in years:
@@ -100,16 +100,24 @@ def load_pretraining(batchsize):
 
     gridded = numpy.vstack(datalist)
     X = (gridded - gridded.mean(axis=0)) / gridded.std(axis=0)
-
+    print "Shape of features:", X.shape
     X = X[:(batchsize * int(X.shape[0]/batchsize))]
     pickle.dump(DenseDesignMatrix(X=X), open(pretraining_file, "w"))
     return DenseDesignMatrix(X=X)
 
-def load_supervised(minyear, maxyear, lt, ln, batchsize):
+def load_supervised(minyear, maxyear, lt, ln, batchsize, which='train'):
     observed_data_dir = os.path.join(DATA_DIR, "gridded_observed_daily")
     observed_file = os.path.join(observed_data_dir, "gridded_obs.daily.Prcp.%i.nc")
     ncep_daily_file = os.path.join(DATA_DIR, "daily_ncep", "%s", "%s.%s.%i.nc")
 
+    supervised_file = os.path.join(DATA_DIR, 'downscaling-deeplearing', "%s_%i_%i_%i_%i.pkl" % (which, minyear, maxyear, lt, ln))
+    transform_file = os.path.join(DATA_DIR, 'downscaling-deeplearing', "trainsform_%i_%i.pkl" % (lt, ln))
+
+    if os.path.exists(supervised_file):
+        print "reading from learning file"
+        return pickle.load(open(supervised_file, 'r'))
+
+    from netCDF4 import Dataset, num2date
     data = Dataset(observed_file % minyear)
     lat = numpy.where(data.variables["latitude"][:] < lt)
     lon = numpy.where(data.variables["latitude"][:] < ln)
@@ -145,18 +153,30 @@ def load_supervised(minyear, maxyear, lt, ln, batchsize):
     X = numpy.vstack(X)
     Y = numpy.reshape(numpy.array(Y), (len(Y),1))
     T = numpy.array(T)
-    X = (X - X.mean(axis=0)) / X.std(axis=0)
+
+    if which != 'train':
+        if not os.path.exists(transform_file):
+            raise Exception("Transformation file does not exist")
+        transform = pickle.load(open(transform_file, 'r'))
+    else:
+        transform = {'mu': X.mean(axis=0), 'std': X.std(axis=0)}
+        pickle.dump(transform, open(transform_file, "w"))
+
+    X = (X - transform['mu']) / transform['std']
 
     X = X[:(batchsize * int(X.shape[0]/batchsize))]
     Y = Y[:(batchsize * int(len(Y)/batchsize))]
-
-    return DenseDesignMatrix(X=X, y=Y)
+    out = DenseDesignMatrix(X=X, y=Y)
+    pickle.dump(out, open(supervised_file, "w"))
+    return out
 
 
 if __name__ == "__main__":
-    #load_pretraining()
-    #load_supervised(1950, 1960, 42, 250, 50)
     #download_observed_daily()
     for var in variables:
         download_daily_data(var)
         download_4h_data(var)
+
+    load_pretraining(1950, 1980, 50)
+    load_supervised(1950, 1980, 42, 250, 50, which='train')
+    load_supervised(1981, 1999, 42, 250, 50, which='test')
