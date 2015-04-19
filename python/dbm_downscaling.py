@@ -4,6 +4,14 @@ import os
 import numpy
 from matplotlib import pyplot
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--mlp_yaml", help="MLP Yaml File")
+parser.add_argument("--lat", help="Training Latitude", type=float)
+parser.add_argument("--lon", help="Training Longitude", type=float)
+args = parser.parse_args()
+
 
 # In[2]:
 
@@ -28,7 +36,7 @@ from matplotlib import pyplot
 
 # In[8]:
 
-layer3_yaml = open('mlp_l3.yaml', 'r').read()
+layer3_yaml = open(args.mlp_yaml, 'r').read() % (args.lat, args.lon, args.lat, args.lon, args.lat, args.lon)
 train = yaml_parse.load(layer3_yaml)
 train.main_loop()
 
@@ -43,7 +51,7 @@ import theano
 # In[10]:
 
 def passdata(data):
-    model1_path = 'mlp.pkl'
+    model1_path = 'mlp_dropout.pkl'
     model1 = serial.load( model1_path )
 
     X = model1.get_input_space().make_theano_batch()
