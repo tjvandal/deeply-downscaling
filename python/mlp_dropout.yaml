@@ -1,26 +1,26 @@
 !obj:pylearn2.train.Train {
     dataset: &train !obj:load_data.load_supervised {
         minyear: 1950,
-        maxyear: 1980,
-        lt: %2.2f,
-        ln: %2.2f,
-        batchsize: 50,
+        maxyear: 1985,
+        lt: %2.4f,
+        ln: %2.4f,
+        batchsize: 365,
         which: train
     },
     model: !obj:pylearn2.models.mlp.MLP {
-        batch_size: 50,
+        batch_size: 365,
         layers: [
                  !obj:pylearn2.models.mlp.PretrainedLayer {
                      layer_name: 'h1',
-                     layer_content: !pkl: "grbm_l1.pkl"
+                     layer_content: !pkl: "grbm_l1_%i.pkl"
                  },
                  !obj:pylearn2.models.mlp.PretrainedLayer {
                      layer_name: 'h2',
-                     layer_content: !pkl: "rbm_l2.pkl"
+                     layer_content: !pkl: "rbm_l2_%i_%i.pkl"
                  },
-                    !obj:pylearn2.models.mlp.PretrainedLayer {
+                !obj:pylearn2.models.mlp.PretrainedLayer {
                      layer_name: 'h3',
-                     layer_content: !pkl: "rbm_l3.pkl"
+                    layer_content: !pkl: "rbm_l3_%i_%i.pkl"
                  },
                  !obj:pylearn2.models.mlp.LinearGaussian {   ## this will be changed to an SVR 
                      init_bias: !obj:pylearn2.models.mlp.mean_of_targets {
@@ -28,7 +28,7 @@
                      init_beta: !obj:pylearn2.models.mlp.beta_from_targets {
                        dataset: *train },
                      min_beta: 1.,
-                     max_beta: 100.,
+                     max_beta: 50.,
                      beta_lr_scale: 1.,
                      dim: 1,
                      # max_col_norm: 1.9365,
@@ -40,24 +40,24 @@
     },
        algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
                 learning_rate: 0.005,
-                batch_size: 50,
+                batch_size: 365,
                 monitoring_batches: 10,
                 monitoring_dataset : {
                         'train' : *train,
                         'test' : !obj:load_data.load_supervised {
-                            minyear: 1981,
+                            minyear: 1986,
                             maxyear: 1999,
-                            lt: %2.2f,
-                            ln: %2.2f,
-                            batchsize: 50,
+                            lt: %2.4f,
+                            ln: %2.4f,
+                            batchsize: 365,
                             which: 'test'
                          },
                 },
                 termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
-                          max_epochs: 100,
+                          max_epochs: 1000,
                 },
                 cost: !obj:pylearn2.costs.mlp.dropout.Dropout {
-                         input_include_probs: { 'h1' : 0.8, 'h2': 0.5, 'h3' : 0.5, 'y' : 1. },
+                         input_include_probs: { 'h1' : 0.8, 'h2': 0.50, 'h3': 0.50},
                          #input_scales: { 'h0': 1. }
                 },
         },
@@ -72,5 +72,5 @@
            # },
     ],
     save_path: "./mlp_dropout_%2.2f_%2.2f.pkl",
-    save_freq: 10
+    save_freq: 100
 }

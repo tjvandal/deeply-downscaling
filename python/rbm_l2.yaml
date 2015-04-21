@@ -5,11 +5,11 @@
                 maxyear: 1980,
                 batchsize: 100,
             },
-            transformer: !pkl: "./grbm_l1.pkl"
+            transformer: !pkl: "./grbm_l1_%i.pkl"
         },
        model: !obj:pylearn2.models.rbm.RBM {
-        nvis : 2000,
-        nhid : 500,
+        nvis : %i,
+        nhid : %i,
         irange : 0.05,
         #init_bias_hid : 0.0,
     },
@@ -29,6 +29,6 @@
             max_epochs: 200,
         },
     },
-    save_path: "./rbm_l2.pkl",
+    save_path: "./rbm_l2_%i_%i.pkl",
     save_freq: 1
 }

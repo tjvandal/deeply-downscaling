@@ -107,6 +107,8 @@ def load_pretraining(minyear, maxyear, batchsize):
     return DenseDesignMatrix(X=X)
 
 def load_supervised(minyear, maxyear, lt, ln, batchsize, which='train'):
+    if ln > 180:
+        ln = ln - 360
     observed_data_dir = os.path.join(DATA_DIR, "gridded_observed_daily")
     observed_file = os.path.join(observed_data_dir, "gridded_obs.daily.Prcp.%i.nc")
     ncep_daily_file = os.path.join(DATA_DIR, "daily_ncep", "%s", "%s.%s.%i.nc")
@@ -115,16 +117,20 @@ def load_supervised(minyear, maxyear, lt, ln, batchsize, which='train'):
     transform_file = os.path.join(DATA_DIR, 'downscaling-deeplearning', "trainsform_%2.2f_%2.2f.pkl" % (lt, ln))
     print supervised_file
     if os.path.exists(supervised_file):
-        print "reading from learning file"
+        print "reading from %s file" % which
         return pickle.load(open(supervised_file, 'r'))
 
     from netCDF4 import Dataset, num2date
     data = Dataset(observed_file % minyear)
-    lat = numpy.where(data.variables["latitude"][:] < lt)
-    lon = numpy.where(data.variables["latitude"][:] < ln)
+    lat = numpy.where(data.variables["latitude"][:] <= lt)
+    lon = numpy.where(data.variables["longitude"][:] <= ln)
 
     ltidx = lat[-1][-1]
     lnidx = lon[-1][-1]
+
+    print "Lat in %2.4f with Lon %2.4f" % (lt, ln)
+    print "Training with Lat=%3.4f and Lon=%3.4f" % (data.variables["latitude"][ltidx], data.variables["longitude"][lnidx])
+
     Y = []
     T = []
     X = []
@@ -157,7 +163,9 @@ def load_supervised(minyear, maxyear, lt, ln, batchsize, which='train'):
 
     if which != 'train':
         if not os.path.exists(transform_file):
-            raise Exception("Transformation file does not exist")
+            print "Warning: Transformation file does not exist. Will use current dataset to create file"
+            transform = {'mu': X.mean(axis=0), 'std': X.std(axis=0)}
+            pickle.dump(transform, open(transform_file, "w"))
         transform = pickle.load(open(transform_file, 'r'))
     else:
         transform = {'mu': X.mean(axis=0), 'std': X.std(axis=0)}
