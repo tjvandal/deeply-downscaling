@@ -1,13 +1,15 @@
 !obj:pylearn2.train.Train {
     dataset: &train !obj:pylearn2.datasets.transformer_dataset.TransformerDataset {
             raw: !obj:load_data.load_pretraining {
-                batchsize: 100
+                minyear: 1950,
+                maxyear: 1980,
+                batchsize: 100,
             },
-            transformer: !pkl: "./grbm_l1.pkl"
+            transformer: !pkl: "./grbm_l1_%i.pkl"
         },
        model: !obj:pylearn2.models.rbm.RBM {
-        nvis : 2000,
-        nhid : 500,
+        nvis : %i,
+        nhid : %i,
         irange : 0.05,
         #init_bias_hid : 0.0,
     },
@@ -24,9 +26,9 @@
             ]
         },
         termination_criterion : !obj:pylearn2.termination_criteria.EpochCounter {
-            max_epochs: 50,
+            max_epochs: 200,
         },
     },
-    save_path: "./rbm_l2.pkl",
+    save_path: "./rbm_l2_%i_%i.pkl",
     save_freq: 1
 }

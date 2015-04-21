@@ -6,7 +6,7 @@
     },
        model: !obj:pylearn2.models.rbm.GaussianBinaryRBM {
         nvis : 2178,
-        nhid : 2000,
+        nhid : %i,
         irange : 0.05,
         energy_function_class : !obj:pylearn2.energy_functions.rbm_energy.grbm_type_1 {},
         learn_sigma : True,
@@ -30,9 +30,9 @@
             }
         },
         termination_criterion : !obj:pylearn2.termination_criteria.EpochCounter {
-            max_epochs: 50,
+            max_epochs: 200,
         },
     },
-    save_path: "./grbm_l1.pkl",
+    save_path: "./grbm_l1_%i.pkl",
     save_freq: 1
 }
