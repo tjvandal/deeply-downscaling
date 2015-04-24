@@ -7,6 +7,7 @@ from sklearn.svm import SVR
 import argparse
 from sklearn.grid_search import GridSearchCV
 import pickle 
+from scipy.stats.stats import pearsonr, spearmanr
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lat", help="Training Latitude", type=float)
@@ -50,9 +51,9 @@ else:
 	pickle.dump(clf, open(svr_file, "w"))
 
 ## Compute fit statistics
-yhat = clf.predict(test_data.X)
+yhat = clf.predict(test_data.X[:, components])
 print "Pearson Corr", pearsonr(test_data.y[:,0], yhat)
-print "Spearman Corr", spearmanr(test_data.y[:,0], yhat, )
+print "Spearman Corr", spearmanr(test_data.y[:,0], yhat)
 print "SSE", sum((yhat - test_data.y[:,0])**2)
 
 
