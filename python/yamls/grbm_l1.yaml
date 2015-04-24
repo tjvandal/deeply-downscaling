@@ -33,6 +33,6 @@
             max_epochs: 200,
         },
     },
-    save_path: "./grbm_l1_%i.pkl",
+    save_path: "models/grbm_l1_%i.pkl",
     save_freq: 1
 }

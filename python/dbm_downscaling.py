@@ -19,27 +19,27 @@ h1 = args.h1
 h2 = args.h2
 h3 = args.h3
 
-if not os.path.exists("grbm_l1_%i.pkl" % h1):
+if not os.path.exists("models/grbm_l1_%i.pkl" % h1):
 	print "Pre-training layer 1"
-	layer1_yaml = open('grbm_l1.yaml', 'r').read() % (h1, h1)
+	layer1_yaml = open('yamls/grbm_l1.yaml', 'r').read() % (h1, h1)
 	train = yaml_parse.load(layer1_yaml)
 	train.main_loop()
 
 
-if not os.path.exists("rbm_l2_%i_%i.pkl" % (h1, h2)):
-	layer2_yaml = open('rbm_l2.yaml', 'r').read() % (h1, h1, h2, h1, h2)
+if not os.path.exists("models/rbm_l2_%i_%i.pkl" % (h1, h2)):
+	layer2_yaml = open('yamls/rbm_l2.yaml', 'r').read() % (h1, h1, h2, h1, h2)
 	train = yaml_parse.load(layer2_yaml)
 	train.main_loop()
 
 
-if not os.path.exists("rbm_l3_%i_%i.pkl" % (h2, h3)):
-	layer3_yaml = open('rbm_l3.yaml', 'r').read() % (h1, h1, h2, h2, h3, h2, h3)
+if not os.path.exists("models/rbm_l3_%i_%i.pkl" % (h2, h3)):
+	layer3_yaml = open('yamls/rbm_l3.yaml', 'r').read() % (h1, h1, h2, h2, h3, h2, h3)
 	train = yaml_parse.load(layer3_yaml)
 	train.main_loop()
 
-#mpl_layer = open(args.mlp_yaml, 'r').read() % (args.lat, args.lon, h1, h1, h2, h2, h3, args.lat, args.lon, args.lat, args.lon)
-#train = yaml_parse.load(mpl_layer)
-#train.main_loop()
+mpl_layer = open(args.mlp_yaml, 'r').read() % (args.lat, args.lon, h1, h1, h2, h2, h3, args.lat, args.lon, args.lat, args.lon)
+train = yaml_parse.load(mpl_layer)
+train.main_loop()
 
 
 from pylearn2.utils import serial
@@ -47,7 +47,7 @@ from load_data import load_supervised
 import theano
 
 def passdata(data):
-    model1_path = 'mlp_dropout_%2.2f_%2.2f.pkl' % (args.lat, args.lon)
+    model1_path = 'models/mlp_dropout_%2.2f_%2.2f.pkl' % (args.lat, args.lon)
     model1 = serial.load( model1_path )
 
     X = model1.get_input_space().make_theano_batch()

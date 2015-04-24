@@ -12,15 +12,15 @@
         layers: [
                  !obj:pylearn2.models.mlp.PretrainedLayer {
                      layer_name: 'h1',
-                     layer_content: !pkl: "grbm_l1_%i.pkl"
+                     layer_content: !pkl: "models/grbm_l1_%i.pkl"
                  },
                  !obj:pylearn2.models.mlp.PretrainedLayer {
                      layer_name: 'h2',
-                     layer_content: !pkl: "rbm_l2_%i_%i.pkl"
+                     layer_content: !pkl: "models/rbm_l2_%i_%i.pkl"
                  },
                 !obj:pylearn2.models.mlp.PretrainedLayer {
                      layer_name: 'h3',
-                    layer_content: !pkl: "rbm_l3_%i_%i.pkl"
+                    layer_content: !pkl: "models/rbm_l3_%i_%i.pkl"
                  },
                  !obj:pylearn2.models.mlp.LinearGaussian {   ## this will be changed to an SVR 
                      init_bias: !obj:pylearn2.models.mlp.mean_of_targets {
@@ -71,6 +71,6 @@
              #   saturate: 6
            # },
     ],
-    save_path: "./mlp_dropout_%2.2f_%2.2f.pkl",
+    save_path: "models/mlp_dropout_%2.2f_%2.2f.pkl",
     save_freq: 100
 }
