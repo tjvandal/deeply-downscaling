@@ -19,7 +19,7 @@ print "Training data size:", train_data.X.shape
 print "Test data size:", test_data.X.shape
 
 
-mlp_model = serial.load("models/mlp_dropout_%2.2f_%2.2f.pkl" % (lat, lon))
+mlp_model = serial.load("models/mlp_%2.2f_%2.2f.pkl" % (lat, lon))
 lasso_model = pickle.load(open("models/lasso_%2.2f_%2.2f.pkl" % (lat, lon), 'r'))
 pca_model = pickle.load(open("models/pca.pkl", 'r'))
 svr_model = pickle.load(open("models/svr_%2.2f_%2.2f.pkl" % (lat, lon), 'r'))
@@ -31,7 +31,33 @@ def mlp_predict(data, model):
     Y = model.fprop(X)
     f = theano.function([X], Y)
     predicted = f(data)
+    print numpy.histogram(data.flatten())
+    sys.exit()
     return predicted
+
+def mlp_inference(data, model, iters=1000, drop_ratio=0.10):
+    X = model.get_input_space().make_theano_batch()
+    Y = model.fprop(X)
+    f = theano.function([X], Y)
+    dropnum = int(data.shape[1] * drop_ratio)
+    predictions = numpy.zeros(iters)
+
+    for j in range(iters):
+        drop = numpy.random.permutation(numpy.arange(0, data.shape[1]))
+        dropdata = data.copy()
+        dropdata[400, drop[:dropnum]] = -10
+        noisy = data + numpy.random.normal(0, 1)
+        predictions[j] = f(noisy[400, :][numpy.newaxis, :])[0,0]
+
+    pyplot.subplot(2,1,1)
+    pyplot.scatter(range(iters), predictions)
+    pyplot.subplot(2,1,2)
+    pyplot.hist(predictions)
+    pyplot.show()
+
+print "Observation for time 0 =", test_data.y[3945]
+print "Max day of rain", test_data.y.argmax()
+mlp_inference(test_data.X, mlp_model)
 
 yhat_mlp = mlp_predict(test_data.X, mlp_model)
 yhat_svr = svr_model.predict(test_data.X[:, components])

@@ -52,7 +52,7 @@ def passdata(data):
 
     X = model1.get_input_space().make_theano_batch()
     Y = model1.fprop(X)
-    f = theano.function([X], Y )
+    f = theano.function([X], Y)
     predicted = f(data)
     return predicted
 
