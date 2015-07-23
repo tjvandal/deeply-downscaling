@@ -175,7 +175,7 @@ def load_supervised(minyear, maxyear, lt, ln, batchsize, which='train'):
 
     X = X[:(batchsize * int(X.shape[0]/batchsize))]
     Y = Y[:(batchsize * int(len(Y)/batchsize))]
-    out = DenseDesignMatrix(X=X, y=Y)
+    out = DenseDesignMatrix(X=X, y=numpy.log(Y+1))
     pickle.dump(out, open(supervised_file, "w"))
     return out
 
@@ -186,6 +186,14 @@ if __name__ == "__main__":
         download_daily_data(var)
         download_4h_data(var)
 
-    load_pretraining(1950, 1980, 50)
-    load_supervised(1950, 1980, 42, 250, 50, which='train')
-    load_supervised(1981, 1999, 42, 250, 50, which='test')
+    #load_pretraining(1950, 1980, 50)
+    data = load_supervised(1950, 1980, 42, 250, 50, which='train')
+    #load_supervised(1981, 1999, 42, 250, 50, which='test')
+    from matplotlib import pyplot
+    pyplot.subplot(3, 1, 1)
+    pyplot.hist(data.y, bins=20)
+    pyplot.subplot(3, 1, 2)
+    pyplot.hist(numpy.log(data.y+1), bins=20)
+    pyplot.subplot(3, 1, 3)
+    pyplot.hist(data.y**(0.10), bins=20)
+    pyplot.show()
