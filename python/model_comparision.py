@@ -27,6 +27,17 @@ svr_model = pickle.load(open("models/svr_%2.2f_%2.2f.pkl" % (lat, lon), 'r'))
 
 components = numpy.where(pca_model.explained_variance_ratio_.cumsum() < 0.98)[0]
 
+class PcaSvr:
+    def __init__(self, pca, svr):
+        self.pca = pca
+        self.svr = svr
+
+    def predict(self, X):
+        n_comp = numpy.where(pca_model.explained_variance_ratio_.cumsum() < 0.98)[0]
+        comps = self.pca.transform(X)[:, n_comp]
+        return self.svr.predict(comps)
+
+
 def mlp_predict(data, model):
     X = model.get_input_space().make_theano_batch()
     Y = model.fprop(X)
@@ -36,32 +47,69 @@ def mlp_predict(data, model):
     sys.exit()
     return predicted
 
-def mlp_inference(data, model, iters=1000, drop_ratio=0.10, t=0):
-    X = model.get_input_space().make_theano_batch()
-    Y = model.fprop(X)
-    f = theano.function([X], Y)
-    predictions = numpy.zeros(iters)
+def mlp_inference(data, model, iters=100, t=0):
+    ann = True
+    methods = [method for method in dir(model) if callable(getattr(model, method))]
+
+    if 'predict' in methods:
+        print "FOUND PREDICT"
+        ann = False
+    else:
+        X = model.get_input_space().make_theano_batch()
+        Y = model.fprop(X)
+        f = theano.function([X], Y)
+    predictions = numpy.zeros(shape=(data.X.shape[0], iters))
 
     for j in range(iters):
-        noisy = data + numpy.random.normal(0, 0.5)
-        predictions[j] = f(noisy[t, :][numpy.newaxis, :])[0,0]
+        noisy = data.X + numpy.random.normal(0, 2, size=data.X.shape)
+        noisy = noisy.astype('float32')
+        if not ann:
+            predictions[:, j] = model.predict(noisy)
+        else:
+            predictions[:, j] = f(noisy)[:, 0]
 
-    print "Mean Prediction: %f" % predictions.mean()
-    print "Std Prediction: %f" % predictions.std()
 
-    pyplot.hist(predictions)
+    yhat = predictions.mean(axis=1)
+    timeperiod = 60
 
-t = 400
+    err = predictions - data.y
+    allrmse = numpy.sum(err ** 2, axis=0)**0.5
+    rmse = numpy.sum((yhat[:, numpy.newaxis] - data.y)**2)**0.5
 
-print "Observation for time 0 =", test_data.y[t]
-print "Max day of rain", test_data.y.argmax()
+    #pyplot.plot(data.y[t:(timeperiod+t)], color='green')
+    #pyplot.plot(predictions[t:(timeperiod+t)], color='blue', lw=0.5, alpha=0.05)
+    #pyplot.hist(predictions[t, :], bins=100)
+    pyplot.hist(allrmse)
 
-pyplot.subplot(2,1,1)
-mlp_inference(test_data.X, mlp_model, t=t)
+    print "RMSE: %f" % rmse
+    print "Pearson Corr: %f" % numpy.corrcoef(yhat, data.y[:, 0])[1,0]
+    print "Mean Prediction: %f" % predictions[t].mean()
+    print "Std Prediction: %f" % predictions[t].std()
+    print "RMSEs Mean, STD: (%f, %f)\n" % (allrmse.mean(), allrmse.std())
+    return rmse
 
-pyplot.subplot(2,1,2)
-mlp_inference(test_data.X, mlp_dropout_model, t=t)
+
+t = int(numpy.random.uniform(0, test_data.y.shape[0])) - 100
+
+ax = pyplot.subplot(3,1,1)
+ax.set_title("MLP")
+mlp_inference(test_data, mlp_model, t=t)
+#ymin, ymax = pyplot.ylim([-5, 50])
+
+ax = pyplot.subplot(3, 1, 2)
+ax.set_title("MLP w/ Dropout")
+mlp_inference(test_data, mlp_dropout_model, t=t)
+#pyplot.ylim([ymin, ymax])
+
+ax = pyplot.subplot(3,1,3)
+ax.set_title("Lasso Style")
+mlp_inference(test_data, lasso_model, t=t)
+#pyplot.ylim([ymin, ymax])
+
 pyplot.show()
+
+sys.exit()
+
 
 
 yhat_mlp = mlp_predict(test_data.X, mlp_model)

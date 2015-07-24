@@ -175,7 +175,8 @@ def load_supervised(minyear, maxyear, lt, ln, batchsize, which='train'):
 
     X = X[:(batchsize * int(X.shape[0]/batchsize))]
     Y = Y[:(batchsize * int(len(Y)/batchsize))]
-    out = DenseDesignMatrix(X=X, y=numpy.log(Y+1))
+  #  out = DenseDesignMatrix(X=X, y=numpy.log(Y+1))
+    out = DenseDesignMatrix(X=X, y=Y)
     pickle.dump(out, open(supervised_file, "w"))
     return out
 

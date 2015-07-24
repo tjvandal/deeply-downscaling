@@ -47,7 +47,7 @@ from load_data import load_supervised
 import theano
 
 def passdata(data):
-    model1_path = 'models/mlp_%2.2f_%2.2f.pkl' % (args.lat, args.lon, args.fname)
+    model1_path = 'models/mlp_%2.2f_%2.2f.pkl' % (args.lat, args.lon)
     model1 = serial.load( model1_path )
 
     X = model1.get_input_space().make_theano_batch()
