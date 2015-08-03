@@ -81,4 +81,6 @@ if __name__ == "__main__":
             store_results += c.get_results()
         except OSError:
             print "Could not compare lat=%2.2f lon=%2.2f" % (lat, lon)
-    print pandas.DataFrame(store_results)
+            
+    df = pandas.DataFrame(store_results)
+    df.to_csv(os.path.join(os.path.dirname(__file__), "comparision.csv"), index=False)
