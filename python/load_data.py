@@ -5,7 +5,7 @@ from matplotlib import pyplot
 from pylearn2.datasets.dense_design_matrix import DenseDesignMatrix
 import pickle
 
-DATA_DIR = os.path.join(os.path.expanduser("~"), "data")
+DATA_DIR = os.path.join("/scratch/vandal.t")
 
 max_lat = 50 #75 #40
 min_lat = 24  #0  #15
