@@ -72,7 +72,7 @@ class Compare:
 if __name__ == "__main__":
     store_results = []
     dropout_files = [f for f in os.listdir(os.path.dirname(MLP_DROPOUT_FILE)) if "mlp_dropout" in f]
-    for f in dropout_files:
+    for j, f in enumerate(dropout_files):
         _, _, lat, lon = f.split("_")
         lat = float(lat)
         lon = float(lon.split(".pkl")[0])
@@ -81,6 +81,9 @@ if __name__ == "__main__":
             store_results += c.get_results()
         except OSError:
             print "Could not compare lat=%2.2f lon=%2.2f" % (lat, lon)
-            
+        if (j % 10) == 0:
+            df = pandas.DataFrame(store_results)
+            df.to_csv(os.path.join(os.path.dirname(__file__), "comparision.csv"), index=False)
+
     df = pandas.DataFrame(store_results)
     df.to_csv(os.path.join(os.path.dirname(__file__), "comparision.csv"), index=False)
